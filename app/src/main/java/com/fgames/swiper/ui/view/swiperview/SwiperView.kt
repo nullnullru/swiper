@@ -36,8 +36,8 @@ class SwiperView : View, Field.FieldListener {
 
     private var gd: GestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
         override fun onLongPress(e: MotionEvent) {
-            Log.d("LONG", "PRESS")
             longPress = true
+            invalidate()
         }
 
         override fun onDown(event: MotionEvent?): Boolean {
@@ -85,7 +85,7 @@ class SwiperView : View, Field.FieldListener {
         super.onDraw(canvas)
 
         canvas?.let {
-            field?.onDraw(it)
+            field?.onDraw(it, longPress)
         }
     }
 
@@ -116,7 +116,9 @@ class SwiperView : View, Field.FieldListener {
                     fieldLine?.release {
                         fieldLine = null
                     }
+                    
                     longPress = false
+                    invalidate()
                 }
             }
         }
