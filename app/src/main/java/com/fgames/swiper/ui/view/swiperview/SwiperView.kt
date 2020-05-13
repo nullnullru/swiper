@@ -13,10 +13,16 @@ import com.fgames.swiper.model.PointF
 import com.fgames.swiper.model.Size
 import com.fgames.swiper.ui.view.swiperview.model.Field
 import com.fgames.swiper.ui.view.swiperview.model.FieldLine
+import io.reactivex.Single
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
 import kotlin.math.abs
 import kotlin.math.max
 
 class SwiperView : View {
+    private var fieldCreatingDisposable: Disposable? = null
+
     private var field: Field? = null
     private var fieldLine: FieldLine? = null
 
@@ -31,13 +37,16 @@ class SwiperView : View {
     }
 
     fun setImage(image: Bitmap) {
-        field = Field.create(
-            image,
-            Size(width, height),
-            Size(9, 9)
-        ).apply {
-            drawRequest = { invalidate() }
-        }
+        fieldCreatingDisposable = Field.create(
+                image,
+                Size(width, height),
+                Size(9, 9)
+            )
+            .doOnSuccess { it.drawRequest = { invalidate() } }
+            .subscribe { field ->
+                this.field = field
+                invalidate()
+            }
     }
 
     override fun onDraw(canvas: Canvas?) {
@@ -99,6 +108,6 @@ class SwiperView : View {
     }
 
     companion object {
-        const val DISTANCE_TO_ACTION = 30
+        const val DISTANCE_TO_ACTION = 20
     }
 }

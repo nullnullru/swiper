@@ -2,7 +2,12 @@ package com.fgames.swiper.ui.view.swiperview.model
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import com.fgames.swiper.model.*
+import io.reactivex.Single
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 import kotlin.math.roundToInt
 
 class Field(
@@ -14,12 +19,11 @@ class Field(
     var drawRequest: (() -> Unit)? = null
 ) {
     private val gameFieldBound = BoundF(PointF(physPadding.w, physPadding.h), physGameFieldSize)
-
     private var line: FieldLine? = null
-
+    
     fun onDraw(canvas: Canvas) {
         for (cell in cells) {
-            if(line?.contain(cell) != true) {
+            if (line?.contain(cell) != true) {
                 cell.onDraw(canvas, physPadding)
             }
         }
@@ -28,33 +32,40 @@ class Field(
 
     fun getLine(point: PointF, orientation: Orientation): FieldLine? {
         line = null
-        if(gameFieldBound.has(point)) {
-            val pPoint = PointF(point.x - physPadding.w, point.y - physPadding.h)
-            if(orientation == Orientation.HORIZONTAL) {
-                val line = (pPoint.y / physCellSize.h).roundToInt()
-                this.line = FieldLine(
-                    cells.filter { it.position.y == line },
-                    physCellSize,
-                    orientation,
-                    drawRequest,
-                    { this.line = null }
-                )
-            } else {
-                val row = (pPoint.x / physCellSize.w).roundToInt()
-                this.line = FieldLine(
-                    cells.filter { it.position.x == row },
-                    physCellSize,
-                    orientation,
-                    drawRequest,
-                    { this.line = null }
-                )
+        if (gameFieldBound.has(point)) {
+            PointF(point.x - physPadding.w, point.y - physPadding.h).apply {
+                if (orientation == Orientation.HORIZONTAL) {
+                    val line = (this.y / physCellSize.h).toInt()
+                    this@Field.line = FieldLine(
+                        cells.filter { it.position.y == line },
+                        physCellSize,
+                        orientation,
+                        drawRequest,
+                        { this@Field.line = null }
+                    )
+                } else {
+                    val row = (this.x / physCellSize.w).toInt()
+                    this@Field.line = FieldLine(
+                        cells.filter { it.position.x == row },
+                        physCellSize,
+                        orientation,
+                        drawRequest,
+                        { this@Field.line = null }
+                    )
+                }
             }
+
         }
         return line
     }
 
     companion object Factory {
-        fun create(image: Bitmap, physFieldSize: Size, fieldSize: Size, paddingPercent: Float = 0.125f): Field {
+        fun create(
+            image: Bitmap,
+            physFieldSize: Size,
+            fieldSize: Size,
+            paddingPercent: Float = 0.125f
+        ): Single<Field> {
             val padding = SizeF(
                 physFieldSize.w * paddingPercent,
                 physFieldSize.h * paddingPercent
@@ -85,18 +96,23 @@ class Field(
                 for (y in 0 until fieldSize.h) {
                     val yR = (physCellSize.h * y).roundToInt()
 
-                    val cellImage = Bitmap.createBitmap(gameImage, xR, yR, iPhysCellSize.w, iPhysCellSize.h)
+                    val cellImage =
+                        Bitmap.createBitmap(gameImage, xR, yR, iPhysCellSize.w, iPhysCellSize.h)
                     cells.add(Cell(cellImage, physCellSize, fieldSize, Point(x, y)))
                 }
             }
 
-            return Field(
-                cells,
-                fieldSize,
-                physGameFieldSize,
-                padding,
-                physCellSize
-            )
+            return Single.just(
+                    Field(
+                        cells,
+                        fieldSize,
+                        physGameFieldSize,
+                        padding,
+                        physCellSize
+                    )
+                )
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
         }
     }
 }
