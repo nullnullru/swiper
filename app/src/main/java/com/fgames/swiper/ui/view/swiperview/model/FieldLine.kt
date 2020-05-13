@@ -11,7 +11,7 @@ import com.fgames.swiper.model.SizeF
 import kotlin.math.roundToInt
 
 class FieldLine(
-    private val cells: List<Cell>,
+    val cells: List<Cell>,
     private val physCellSize: SizeF,
     private val orientation: Orientation,
     private val drawRequest: (() -> Unit)?,
@@ -116,7 +116,7 @@ class FieldLine(
         }
     }
 
-    private fun moveCellsByDirection(direction: Direction) {
+    fun moveCellsByDirection(direction: Direction) {
         for (cell in cells) {
             cell.move(direction, orientation)
         }

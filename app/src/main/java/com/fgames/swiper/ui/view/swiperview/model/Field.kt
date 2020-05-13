@@ -9,10 +9,10 @@ import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import kotlin.math.roundToInt
+import kotlin.random.Random
 
 class Field(
     private val cells: List<Cell>,
-    private val fieldSize: Size,
     private val physGameFieldSize: SizeF,
     private val physPadding: SizeF,
     private val physCellSize: SizeF,
@@ -20,19 +20,43 @@ class Field(
 ) {
     private val gameFieldBound = BoundF(PointF(physPadding.w, physPadding.h), physGameFieldSize)
     private var line: FieldLine? = null
-    
-    fun onDraw(canvas: Canvas) {
+
+    private var isCompleted = true
+    var listener: FieldListener? = null
+
+    fun onDraw(canvas: Canvas, initPosition: Boolean = false) {
         for (cell in cells) {
             if (line?.contain(cell) != true) {
-                cell.onDraw(canvas, physPadding)
+                cell.onDraw(canvas, physPadding, initPosition = initPosition)
             }
         }
         line?.onDraw(canvas, physPadding)
     }
 
+    fun mix(iterations: Int = 3) {
+        isCompleted = false
+
+        for (i in 0 until iterations) {
+            val orientation = if(Random.nextBoolean()) Orientation.HORIZONTAL else Orientation.VERTICAL
+            val direction = if(Random.nextBoolean()) Direction.END else Direction.START
+
+            val cell = cells[Random.nextInt(cells.size)]
+            getLine(cell.getPhysCenter(physPadding), orientation)?.let {
+                for(move in 0 .. (Random.nextInt(it.cells.size - 1) + 1)) {
+                    it.moveCellsByDirection(direction)
+                }
+                line = null
+            }
+        }
+
+        if(isCompleted()) {
+            mix(iterations)
+        }
+    }
+
     fun getLine(point: PointF, orientation: Orientation): FieldLine? {
         line = null
-        if (gameFieldBound.has(point)) {
+        if (!isCompleted && gameFieldBound.has(point)) {
             PointF(point.x - physPadding.w, point.y - physPadding.h).apply {
                 if (orientation == Orientation.HORIZONTAL) {
                     val line = (this.y / physCellSize.h).toInt()
@@ -41,7 +65,7 @@ class Field(
                         physCellSize,
                         orientation,
                         drawRequest,
-                        { this@Field.line = null }
+                        { doOnLineRelease() }
                     )
                 } else {
                     val row = (this.x / physCellSize.w).toInt()
@@ -50,13 +74,27 @@ class Field(
                         physCellSize,
                         orientation,
                         drawRequest,
-                        { this@Field.line = null }
+                        { doOnLineRelease() }
                     )
                 }
             }
 
         }
         return line
+    }
+
+    private fun isCompleted(): Boolean {
+        for (cell in cells) {
+            if(cell.position != cell.initPosition)
+                return false
+        }
+        return true
+    }
+
+    private fun doOnLineRelease() {
+        line = null
+        isCompleted = isCompleted()
+        if(isCompleted) listener?.onComplete()
     }
 
     companion object Factory {
@@ -105,14 +143,16 @@ class Field(
             return Single.just(
                     Field(
                         cells,
-                        fieldSize,
                         physGameFieldSize,
                         padding,
                         physCellSize
                     )
                 )
                 .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
         }
+    }
+
+    interface FieldListener {
+        fun onComplete()
     }
 }
