@@ -2,12 +2,7 @@ package com.fgames.swiper.ui.view.swiperview.model
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
 import com.fgames.swiper.model.*
-import io.reactivex.Single
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
@@ -37,19 +32,20 @@ class Field(
         isCompleted = false
 
         for (i in 0 until iterations) {
-            val orientation = if(Random.nextBoolean()) Orientation.HORIZONTAL else Orientation.VERTICAL
-            val direction = if(Random.nextBoolean()) Direction.END else Direction.START
+            val orientation =
+                if (Random.nextBoolean()) Orientation.HORIZONTAL else Orientation.VERTICAL
+            val direction = if (Random.nextBoolean()) Direction.END else Direction.START
 
             val cell = cells[Random.nextInt(cells.size)]
             getLine(cell.getPhysCenter(physPadding), orientation)?.let {
-                for(move in 0 .. (Random.nextInt(it.cells.size - 1) + 1)) {
+                for (move in 0..(Random.nextInt(it.cells.size - 1) + 1)) {
                     it.moveCellsByDirection(direction)
                 }
                 line = null
             }
         }
 
-        if(isCompleted()) {
+        if (isCompleted()) {
             mix(iterations)
         }
     }
@@ -85,7 +81,7 @@ class Field(
 
     private fun isCompleted(): Boolean {
         for (cell in cells) {
-            if(cell.position != cell.initPosition)
+            if (cell.position != cell.initPosition)
                 return false
         }
         return true
@@ -94,63 +90,63 @@ class Field(
     private fun doOnLineRelease() {
         line = null
         isCompleted = isCompleted()
-        if(isCompleted) listener?.onComplete()
+        if (isCompleted) listener?.onComplete()
     }
 
     companion object Factory {
-        fun create(
-            image: Bitmap,
-            physFieldSize: Size,
-            fieldSize: Size,
-            paddingPercent: Float = 0.125f
-        ): Single<Field> {
+        fun create(data: FieldData): Field {
             val padding = SizeF(
-                physFieldSize.w * paddingPercent,
-                physFieldSize.h * paddingPercent
+                data.physFieldSize.w * data.paddingPercent,
+                data.physFieldSize.h * data.paddingPercent
             )
             val physGameFieldSize = SizeF(
-                physFieldSize.w - padding.w * 2f,
-                physFieldSize.h - padding.h * 2f
+                data.physFieldSize.w - padding.w * 2f,
+                data.physFieldSize.h - padding.h * 2f
             )
             val physCellSize = SizeF(
-                physGameFieldSize.w / fieldSize.w,
-                physGameFieldSize.h / fieldSize.h
+                physGameFieldSize.w / data.fieldSize.w,
+                physGameFieldSize.h / data.fieldSize.h
             )
-            val iPhysCellSize = Size(
-                physCellSize.w.roundToInt(),
-                physCellSize.h.roundToInt()
+            val iPhysCellSize = SizeF(
+                physCellSize.w,
+                physCellSize.h
             )
 
             val gameImage = Bitmap.createScaledBitmap(
-                image,
+                data.image,
                 physGameFieldSize.w.roundToInt(),
                 physGameFieldSize.h.roundToInt(),
                 true
             )
 
             val cells = mutableListOf<Cell>()
-            for (x in 0 until fieldSize.w) {
+            for (x in 0 until data.fieldSize.w) {
                 val xR = (physCellSize.w * x).roundToInt()
-                for (y in 0 until fieldSize.h) {
+                for (y in 0 until data.fieldSize.h) {
                     val yR = (physCellSize.h * y).roundToInt()
 
-                    val cellImage =
-                        Bitmap.createBitmap(gameImage, xR, yR, iPhysCellSize.w, iPhysCellSize.h)
-                    cells.add(Cell(cellImage, physCellSize, fieldSize, Point(x, y)))
+                    val cellImage = Bitmap.createScaledBitmap(
+                        Bitmap.createBitmap(
+                            gameImage, xR, yR, iPhysCellSize.w.toInt(), iPhysCellSize.h.toInt()
+                        ),
+                        iPhysCellSize.w.roundToInt(),
+                        iPhysCellSize.h.roundToInt(),
+                        true
+                    )
+                    cells.add(Cell(cellImage, physCellSize, data.fieldSize, Point(x, y)))
                 }
             }
 
-            return Single.just(
-                    Field(
-                        cells,
-                        physGameFieldSize,
-                        padding,
-                        physCellSize
-                    )
-                )
-                .subscribeOn(Schedulers.io())
+            return Field(cells, physGameFieldSize, padding, physCellSize)
         }
     }
+
+    class FieldData(
+        val image: Bitmap,
+        val physFieldSize: Size,
+        val fieldSize: Size,
+        val paddingPercent: Float = 0.125f
+    )
 
     interface FieldListener {
         fun onComplete()

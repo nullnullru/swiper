@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">swiper</string>
+    <string name="action_next">Next</string>
+    <string name="action_prev">Prev</string>
+    <string name="title_field_size">Field size</string>
+    <string name="text_3x3">3x3</string>
+    <string name="text_5x5">5x5</string>
+    <string name="text_7x7">7x7</string>
+    <string name="title_mix_intensity">Mix intensity</string>
+    <string name="text_low">Low</string>
+    <string name="text_medium">Medium</string>
+    <string name="text_high">High</string>
 </resources>

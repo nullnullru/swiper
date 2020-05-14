@@ -27,10 +27,6 @@ class Cell(
         }
 
         canvas.drawBitmap(image, position.x, position.y, paint)
-
-        if(BuildConfig.DEBUG) {
-            drawDebug(canvas, this, position, offset)
-        }
     }
 
     fun move(direction: Direction, orientation: Orientation) {
@@ -56,19 +52,4 @@ class Cell(
         position.x * physSize.w + physOffset.w + physSize.w / 2,
         position.y * physSize.h + physOffset.h + physSize.h / 2
     )
-
-    companion object {
-        private const val DEBUG_DOT_RADIUS = 10f
-
-        private val DEBUG_PAINT = Paint().apply { color = Color.RED }
-        private val DEBUG_PAINT_2 = Paint().apply { color = Color.GREEN }
-
-        private fun drawDebug(canvas: Canvas, cell: Cell, position: PointF, offset: SizeF) {
-            cell.getPhysCenter(offset).let {
-                canvas.drawCircle(it.x, it.y, DEBUG_DOT_RADIUS, this.DEBUG_PAINT)
-            }
-
-            canvas.drawCircle(position.x, position.y, DEBUG_DOT_RADIUS, this.DEBUG_PAINT_2)
-        }
-    }
 }

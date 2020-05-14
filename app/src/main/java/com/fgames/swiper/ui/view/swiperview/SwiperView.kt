@@ -15,8 +15,10 @@ import com.fgames.swiper.model.PointF
 import com.fgames.swiper.model.Size
 import com.fgames.swiper.ui.view.swiperview.model.Field
 import com.fgames.swiper.ui.view.swiperview.model.FieldLine
+import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -27,47 +29,46 @@ class SwiperView : View, Field.FieldListener {
     private var fieldLine: FieldLine? = null
 
     var size = Size(3, 3)
-    var mixCount = 3
+    var mixIntensity = 3
     var listener: SwiperViewListener? = null
 
     private var onDownPoint: PointF? = null
     private var lastMovePoint: PointF? = null
     private var longPress: Boolean = false
 
-    private var gd: GestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
-        override fun onLongPress(e: MotionEvent) {
-            longPress = true
-            invalidate()
-        }
-
-        override fun onDown(event: MotionEvent?): Boolean {
-            if(event != null) {
-                if (fieldLine != null) {
-                    fieldLine?.release { fieldLine = null }
-                } else {
-                    onDownPoint = PointF(event.x, event.y)
-                    return true
+    private var gd: GestureDetector =
+        GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onLongPress(e: MotionEvent) {
+                longPress = true
+                fieldLine?.run {
+                    release(false)
                 }
+                invalidate()
             }
-            return super.onDown(event)
-        }
-    })
+
+            override fun onDown(event: MotionEvent?): Boolean {
+                if (event != null) {
+                    if (fieldLine != null) {
+                        fieldLine?.release { fieldLine = null }
+                    } else {
+                        onDownPoint = PointF(event.x, event.y)
+                        return true
+                    }
+                }
+                return super.onDown(event)
+            }
+        })
 
     constructor(context: Context?) : super(context)
-    constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs) {
-        post {
-            setImage(BitmapFactory.decodeResource(resources, R.drawable.picture))
-        }
-    }
+    constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
 
     fun setImage(image: Bitmap) {
-        fieldCreatingDisposable = Field.create(
-                image,
-                Size(width, height),
-                size
-            )
+        fieldCreatingDisposable?.dispose()
+        fieldCreatingDisposable = Single.just(Field.FieldData(image, Size(width, height), size))
+            .subscribeOn(Schedulers.io())
+            .flatMap { Single.just(Field.create(it)) }
             .doOnSuccess { it.drawRequest = { invalidate() } }
-            .doOnSuccess { it.mix(mixCount) }
+            .doOnSuccess { it.mix(mixIntensity) }
             .doOnSuccess { it.listener = this }
             .observeOn(AndroidSchedulers.mainThread())
             .doOnSuccess { listener?.onReady() }
@@ -90,10 +91,10 @@ class SwiperView : View, Field.FieldListener {
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        if(event != null && field != null) {
-            when(event.action){
+        if (event != null && field != null) {
+            when (event.action) {
                 MotionEvent.ACTION_MOVE -> {
-                    if(!longPress) {
+                    if (!longPress) {
                         val point = PointF(event.x, event.y)
 
                         if (fieldLine == null) {
@@ -116,7 +117,7 @@ class SwiperView : View, Field.FieldListener {
                     fieldLine?.release {
                         fieldLine = null
                     }
-                    
+
                     longPress = false
                     invalidate()
                 }
@@ -130,7 +131,7 @@ class SwiperView : View, Field.FieldListener {
             val diffX = abs(it.x - point.x)
             val diffY = abs(it.y - point.y)
 
-            if(max(diffX, diffY) > DISTANCE_TO_ACTION) {
+            if (max(diffX, diffY) > DISTANCE_TO_ACTION) {
                 return@let if (diffX > diffY) Orientation.HORIZONTAL else Orientation.VERTICAL
             }
             return@let null
@@ -138,7 +139,7 @@ class SwiperView : View, Field.FieldListener {
     }
 
     companion object {
-        const val DISTANCE_TO_ACTION = 20
+        const val DISTANCE_TO_ACTION = 12
     }
 
     interface SwiperViewListener {

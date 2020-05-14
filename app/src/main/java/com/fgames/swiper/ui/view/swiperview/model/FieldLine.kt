@@ -55,30 +55,40 @@ class FieldLine(
         return false
     }
 
-    fun release(doOnRelease: () -> Unit) {
+    fun release(withAnimation: Boolean = true, doOnRelease: (() -> Unit)? = null) {
         if(isBlocked) return
 
         block()
 
-        val from = physOffset
-        val to = if(physOffset > mainValue / 2) mainValue else 0f
+        if(withAnimation) {
+            val from = physOffset
+            val to = if (physOffset > mainValue / 2) mainValue else 0f
 
-        val animator = ValueAnimator.ofFloat(from, to)
+            val animator = ValueAnimator.ofFloat(from, to)
 
-        animator.duration = RELEASE_DURATION
-        animator.addUpdateListener {
-            physOffset = it.animatedValue as Float
-            checkOffset()
-            drawRequest?.invoke()
-        }
-        animator.doOnEnd {
-            animatePhantomsAlpha {
-                this.doOnRelease()
-                doOnRelease()
+            animator.duration = RELEASE_DURATION
+            animator.addUpdateListener {
+                physOffset = it.animatedValue as Float
+                checkOffset()
+                drawRequest?.invoke()
             }
-        }
+            animator.doOnEnd {
+                animatePhantomsAlpha {
+                    this.doOnRelease()
+                    doOnRelease?.invoke()
+                }
+            }
 
-        animator.start()
+            animator.start()
+        } else {
+            physOffset = if (physOffset > mainValue / 2) mainValue else 0f
+            checkOffset()
+
+            drawRequest?.invoke()
+
+            this.doOnRelease()
+            doOnRelease?.invoke()
+        }
     }
 
     private fun animatePhantomsAlpha(doOnEnd: () -> Unit) {

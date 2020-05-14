@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:app="http://schemas.android.com/apk/res-auto">
+    <data>
+        <import type="com.fgames.swiper.model.MixIntensity"/>
+        <import type="com.fgames.swiper.model.FieldSize"/>
+        <variable
+            name="model"
+            type="com.fgames.swiper.model.SettingsModel" />
+    </data>
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#555"
+        android:orientation="horizontal"
+        android:paddingTop="16dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="16dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:text="@string/title_field_size"
+                android:textColor="#aaa"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/field_size_3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:background="@drawable/bg_stroke"
+                android:paddingStart="28dp"
+                android:paddingTop="5dp"
+                android:paddingEnd="28dp"
+                android:paddingBottom="6dp"
+                android:text="@string/text_3x3"
+                android:textColor="#FFF"
+                app:hasStroke="@{model.size == FieldSize.S3x3}"/>
+
+            <TextView
+                android:id="@+id/field_size_5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:background="@drawable/bg_stroke"
+                android:paddingStart="28dp"
+                android:paddingTop="5dp"
+                android:paddingEnd="28dp"
+                android:paddingBottom="6dp"
+                android:text="@string/text_5x5"
+                android:textColor="#FFF"
+                app:hasStroke="@{model.size == FieldSize.S5x5}" />
+
+            <TextView
+                android:id="@+id/field_size_7"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:background="@drawable/bg_stroke"
+                android:paddingStart="28dp"
+                android:paddingTop="5dp"
+                android:paddingEnd="28dp"
+                android:paddingBottom="6dp"
+                android:text="@string/text_7x7"
+                android:textColor="#FFF"
+                app:hasStroke="@{model.size == FieldSize.S7x7}" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:text="@string/title_mix_intensity"
+                android:textColor="#aaa"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/intensity_low"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:background="@drawable/bg_stroke"
+                android:paddingStart="28dp"
+                android:paddingTop="5dp"
+                android:paddingEnd="28dp"
+                android:paddingBottom="6dp"
+                android:text="@string/text_low"
+                android:textColor="#FFF"
+                app:hasStroke="@{model.intensity == MixIntensity.LOW}"/>
+
+            <TextView
+                android:id="@+id/intensity_medium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:background="@drawable/bg_stroke"
+                android:paddingStart="28dp"
+                android:paddingTop="5dp"
+                android:paddingEnd="28dp"
+                android:paddingBottom="6dp"
+                android:text="@string/text_medium"
+                android:textColor="#FFF"
+                app:hasStroke="@{model.intensity == MixIntensity.MEDIUM}" />
+
+            <TextView
+                android:id="@+id/intensity_high"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:background="@drawable/bg_stroke"
+                android:paddingStart="28dp"
+                android:paddingTop="5dp"
+                android:paddingEnd="28dp"
+                android:paddingBottom="6dp"
+                android:text="@string/text_high"
+                android:textColor="#FFF"
+                app:hasStroke="@{model.intensity == MixIntensity.HIGH}" />
+        </LinearLayout>
+    </LinearLayout>
+</layout>
