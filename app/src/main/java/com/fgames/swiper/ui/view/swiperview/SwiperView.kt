@@ -70,6 +70,7 @@ class SwiperView : View, Field.FieldListener {
             .doOnSuccess { it.drawRequest = { invalidate() } }
             .doOnSuccess { it.mix(mixIntensity) }
             .doOnSuccess { it.listener = this }
+            .doOnSubscribe { longPress = false }
             .observeOn(AndroidSchedulers.mainThread())
             .doOnSuccess { listener?.onReady() }
             .subscribe { field ->
