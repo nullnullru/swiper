@@ -11,11 +11,11 @@ import kotlin.math.abs
 class GradientGenerator {
     companion object {
         private val GRADIENTS = listOf(
-            GradientModel(Color.parseColor("#fce38a"), Color.parseColor("#f38181"), 90f),
+            GradientModel(Color.parseColor("#fce38a"), Color.parseColor("#f38181"), 70f),
             GradientModel(Color.parseColor("#f54ea2"), Color.parseColor("#ff7676"), 135f),
             GradientModel(Color.parseColor("#17ead9"), Color.parseColor("#6078ea"), 120f),
             GradientModel(Color.parseColor("#622774"), Color.parseColor("#c53364"), 45f),
-            GradientModel(Color.parseColor("#7117ea"), Color.parseColor("#ea6060"), 180f),
+            GradientModel(Color.parseColor("#7117ea"), Color.parseColor("#ea6060"), 160f),
             GradientModel(Color.parseColor("#42e695"), Color.parseColor("#3bb2b8"), 215f),
             GradientModel(Color.parseColor("#f02fc2"), Color.parseColor("#6094ea"), 135f),
             GradientModel(Color.parseColor("#65799b"), Color.parseColor("#5e2563"), 115f),
