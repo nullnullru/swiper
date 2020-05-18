@@ -1,15 +1,15 @@
-package com.fgames.swiper
+package com.fgames.swiper.ui
 
 import android.animation.ValueAnimator
 import android.graphics.Point
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.animation.doOnEnd
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import com.fgames.swiper.R
 import com.fgames.swiper.databinding.SettingsLayoutBinding
 import com.fgames.swiper.model.FieldSize
 import com.fgames.swiper.model.MixIntensity
@@ -24,7 +24,6 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.settings_layout.*
 import kotlinx.android.synthetic.main.settings_layout.view.*
 import java.util.concurrent.TimeUnit
 
@@ -83,7 +82,10 @@ class MainActivity : AppCompatActivity(), SwiperView.SwiperViewListener, View.On
                             fadeOut(picture_preview_small)
                             fadeIn(it)
 
-                            swiper.setImage(response.picture)
+                            Single
+                                .timer(500, TimeUnit.MILLISECONDS)
+                                .subscribe { _ -> swiper.setImage(response.picture) }
+
                             showSwiper()
                         }
                     }
@@ -207,7 +209,8 @@ class MainActivity : AppCompatActivity(), SwiperView.SwiperViewListener, View.On
             val startAlpha = timer_view.alpha
             val way = startScale - timerScaleValue
 
-            duration = ANIMATION_DURATION
+            duration =
+                ANIMATION_DURATION
             addUpdateListener {
                 val value = it.animatedValue as Float
                 timer_view.run {
@@ -224,7 +227,8 @@ class MainActivity : AppCompatActivity(), SwiperView.SwiperViewListener, View.On
     private fun animateTimer() {
         timerAnimator?.cancel()
         timerAnimator = ValueAnimator.ofFloat(1f, timerScaleValue).apply {
-            duration = TIMER_ANIMATION_DURATION
+            duration =
+                TIMER_ANIMATION_DURATION
             addUpdateListener {
                 val value = it.animatedValue as Float
                 timer_view.run {
@@ -253,7 +257,8 @@ class MainActivity : AppCompatActivity(), SwiperView.SwiperViewListener, View.On
 
     companion object {
         const val ANIMATION_DURATION = 400L
-        const val ANIMATION_DELAY = ANIMATION_DURATION
+        const val ANIMATION_DELAY =
+            ANIMATION_DURATION
         const val TIMER_ANIMATION_DURATION = 2000L
     }
 
