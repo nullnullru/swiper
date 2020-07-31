@@ -15,6 +15,7 @@ import com.fgames.swiper.model.FieldSize
 import com.fgames.swiper.model.MixIntensity
 import com.fgames.swiper.model.SettingsModel
 import com.fgames.swiper.model.Size
+import com.fgames.swiper.ui.utils.ViewTools
 import com.fgames.swiper.ui.view.swiperview.SwiperView
 import com.fgames.swiper.viewmodel.MainViewModel
 import com.fgames.swiper.viewmodel.SettingsViewModel
@@ -28,9 +29,9 @@ import kotlinx.android.synthetic.main.settings_layout.view.*
 import java.util.concurrent.TimeUnit
 
 
-class MainActivity : AppCompatActivity(), SwiperView.SwiperViewListener, View.OnClickListener {
+class MainActivity : SettingsActivity(), SwiperView.SwiperViewListener, View.OnClickListener {
+
     private lateinit var mvm: MainViewModel
-    private lateinit var svm: SettingsViewModel
 
     private var showSwiper: Disposable? = null
 
@@ -42,7 +43,6 @@ class MainActivity : AppCompatActivity(), SwiperView.SwiperViewListener, View.On
         setContentView(R.layout.activity_main)
 
         mvm = ViewModelProvider.AndroidViewModelFactory.getInstance(application).create(MainViewModel::class.java)
-        svm = ViewModelProvider.AndroidViewModelFactory.getInstance(application).create(SettingsViewModel::class.java)
 
         mvm.getUpdateFlag().observe(this, Observer { flag ->
             if(flag == MainViewModel.INITIAL_FLAG) {
@@ -50,12 +50,10 @@ class MainActivity : AppCompatActivity(), SwiperView.SwiperViewListener, View.On
                 picture_preview.alpha = 0f
                 picture_preview_small.alpha = 0f
             } else {
-                fadeOut(swiper)
-                fadeOut(picture_preview)
-                fadeOut(picture_preview_small)
-                fadeOut(view_done)
-
-                fadeIn(animation_view)
+                ViewTools.fadeInAndOut(
+                    listOf(animation_view),
+                    listOf(swiper, picture_preview, picture_preview_small, view_done)
+                )
 
                 button_refresh.alpha = 0f
                 button_refresh.visibility = View.INVISIBLE
@@ -64,23 +62,22 @@ class MainActivity : AppCompatActivity(), SwiperView.SwiperViewListener, View.On
             }
         })
         mvm.getLoadedPicture().observe(this, Observer { response ->
-            fadeOut(animation_view)
+            ViewTools.fadeOut(animation_view)
 
             if(response.isRefresh) {
                 swiper.setImage(response.picture)
-                fadeOut(view_done)
+                ViewTools.fadeOut(view_done)
             } else {
                 when (response.size) {
                     MainViewModel.SMALL_PICTURE_SIZE ->
                         picture_preview_small.let {
                             it.setImageBitmap(response.picture)
-                            fadeIn(it)
+                            ViewTools.fadeIn(it)
                         }
                     MainViewModel.DEFAULT_PICTURE_SIZE -> {
                         picture_preview.let {
                             it.setImageBitmap(response.picture)
-                            fadeOut(picture_preview_small)
-                            fadeIn(it)
+                            ViewTools.fadeInAndOut(it, picture_preview_small)
 
                             Single
                                 .timer(500, TimeUnit.MILLISECONDS)
@@ -104,53 +101,27 @@ class MainActivity : AppCompatActivity(), SwiperView.SwiperViewListener, View.On
 
         swiper.listener = this
 
-        button_next.setOnClickListener { mvm.nextPicture() }
-        button_prev.setOnClickListener { mvm.prevPicture() }
-        button_refresh.setOnClickListener { mvm.refresh() }
-        button_settings.setOnClickListener { openSettings() }
+        button_next.setOnClickListener(this)
+        button_prev.setOnClickListener(this)
+        button_refresh.setOnClickListener(this)
+        button_settings.setOnClickListener(this)
 
         initTimerView()
     }
 
     override fun onCompleted() {
-        fadeIn(view_done)
+        ViewTools.fadeIn(view_done)
     }
 
     override fun onReady() { }
 
-    private fun openSettings() {
-        val binding = DataBindingUtil.inflate<SettingsLayoutBinding>(
-            layoutInflater,
-            R.layout.settings_layout,
-            null,
-            false
-        )
-        val dialog = BottomSheetDialog(this)
-        val settingsObserver = Observer<SettingsModel> { settings -> binding.model = settings }
-
-        binding.model = svm.getSettings().value
-        svm.getSettings().observeForever(settingsObserver)
-        dialog.setOnDismissListener { svm.getSettings().removeObserver(settingsObserver) }
-
-        binding.root.field_size_3.setOnClickListener(this)
-        binding.root.field_size_5.setOnClickListener(this)
-        binding.root.field_size_7.setOnClickListener(this)
-        binding.root.intensity_low.setOnClickListener(this)
-        binding.root.intensity_medium.setOnClickListener(this)
-        binding.root.intensity_high.setOnClickListener(this)
-
-        dialog.setContentView(binding.root)
-        dialog.show()
-    }
-
     override fun onClick(v: View?) {
+        super.onClick(v)
         when(v?.id) {
-            R.id.field_size_3 -> svm.setSizeField(FieldSize.S3x3)
-            R.id.field_size_5 -> svm.setSizeField(FieldSize.S5x5)
-            R.id.field_size_7 -> svm.setSizeField(FieldSize.S7x7)
-            R.id.intensity_low -> svm.setMixIntensity(MixIntensity.LOW)
-            R.id.intensity_medium -> svm.setMixIntensity(MixIntensity.MEDIUM)
-            R.id.intensity_high -> svm.setMixIntensity(MixIntensity.HIGH)
+            R.id.button_next -> mvm.nextPicture()
+            R.id.button_prev -> mvm.prevPicture()
+            R.id.button_refresh -> mvm.refresh()
+            R.id.button_settings -> openSettings()
         }
     }
 
@@ -179,7 +150,7 @@ class MainActivity : AppCompatActivity(), SwiperView.SwiperViewListener, View.On
             .doAfterSuccess { stopTimer() }
             .doAfterSuccess {
                 button_refresh.visibility = View.VISIBLE
-                fadeIn(button_refresh)
+                ViewTools.fadeIn(button_refresh)
             }
             .doOnDispose {
                 timerAnimator?.let {
@@ -190,9 +161,9 @@ class MainActivity : AppCompatActivity(), SwiperView.SwiperViewListener, View.On
                 }
             }
             .subscribe { _ ->
-                fadeOut(picture_preview)
-                fadeOut(picture_preview_small)
-                fadeIn(swiper)
+                ViewTools.fadeOut(picture_preview)
+                ViewTools.fadeOut(picture_preview_small)
+                ViewTools.fadeIn(swiper)
             }
     }
 
@@ -209,8 +180,7 @@ class MainActivity : AppCompatActivity(), SwiperView.SwiperViewListener, View.On
             val startAlpha = timer_view.alpha
             val way = startScale - timerScaleValue
 
-            duration =
-                ANIMATION_DURATION
+            duration = ViewTools.ANIMATION_DURATION
             addUpdateListener {
                 val value = it.animatedValue as Float
                 timer_view.run {
@@ -227,8 +197,7 @@ class MainActivity : AppCompatActivity(), SwiperView.SwiperViewListener, View.On
     private fun animateTimer() {
         timerAnimator?.cancel()
         timerAnimator = ValueAnimator.ofFloat(1f, timerScaleValue).apply {
-            duration =
-                TIMER_ANIMATION_DURATION
+            duration = TIMER_ANIMATION_DURATION
             addUpdateListener {
                 val value = it.animatedValue as Float
                 timer_view.run {
@@ -241,24 +210,7 @@ class MainActivity : AppCompatActivity(), SwiperView.SwiperViewListener, View.On
         }
     }
 
-    private fun fadeOut(view: View) {
-        view.animate()
-            .setDuration(ANIMATION_DURATION)
-            .alpha(0f)
-            .start()
-    }
-
-    private fun fadeIn(view: View) {
-        view.animate()
-            .setDuration(ANIMATION_DURATION)
-            .alpha(1f)
-            .start()
-    }
-
     companion object {
-        const val ANIMATION_DURATION = 400L
-        const val ANIMATION_DELAY =
-            ANIMATION_DURATION
         const val TIMER_ANIMATION_DURATION = 2000L
     }
 
