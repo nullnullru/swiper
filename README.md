@@ -12,7 +12,7 @@
 - RxJava2 <br>
 - MVVM <br>
 - DataBinding  <br> 
-- LiveDat <br>
+- LiveData <br>
 - Retrofit <br>
 - Lottie <br>
 
