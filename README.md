@@ -1,4 +1,4 @@
-![alt text](https://github.com/nullnullru/swiper/blob/master/app/src/main/res/drawable-xhdpi/ic_launcher.png) <a href="https://play.google.com/store/apps/details?id=com.fgames.swiper"><img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/images/generic/en-play-badge.png" height=60px /></a>
+<a href="https://play.google.com/store/apps/details?id=com.fgames.swiper"><img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/images/generic/en-play-badge.png" height=60px /></a>
 
 ![alt text](https://repository-images.githubusercontent.com/261715147/361e3580-acbc-11ea-8978-54947ef95668) 
 
