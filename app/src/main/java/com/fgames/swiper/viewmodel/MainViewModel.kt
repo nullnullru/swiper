@@ -1,22 +1,16 @@
 package com.fgames.swiper.viewmodel
 
-import android.graphics.Color
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import co.revely.gradient.RevelyGradient
 import com.fgames.swiper.TheApplication
-import com.fgames.swiper.model.ui.MainViewModelState
+import com.fgames.swiper.model.state.MainViewModelState
 import com.fgames.swiper.model.picture.PictureLoadRequest
 import com.fgames.swiper.model.picture.PictureLoadResponse
 import com.fgames.swiper.model.picture.PictureModel
 import com.fgames.swiper.repository.MainStateRepository
 import com.fgames.swiper.repository.PicsumPictureRepository
 import com.fgames.swiper.utils.GradientGenerator
-import com.fgames.swiper.utils.ImageLoadUtils
-import io.reactivex.Completable
-import io.reactivex.Maybe
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers

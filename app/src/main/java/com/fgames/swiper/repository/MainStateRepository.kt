@@ -1,6 +1,6 @@
 package com.fgames.swiper.repository
 
-import com.fgames.swiper.model.ui.MainViewModelState
+import com.fgames.swiper.model.state.MainViewModelState
 import io.paperdb.Paper
 
 class MainStateRepository {

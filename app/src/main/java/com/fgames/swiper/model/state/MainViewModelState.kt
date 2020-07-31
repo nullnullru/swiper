@@ -1,4 +1,4 @@
-package com.fgames.swiper.model.ui
+package com.fgames.swiper.model.state
 
 import com.fgames.swiper.model.picture.PictureModel
 
