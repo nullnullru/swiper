@@ -8,11 +8,12 @@ import kotlin.random.Random
 
 class Field(
     private val cells: List<Cell>,
-    private val physGameFieldSize: SizeF,
+    physGameFieldSize: SizeF,
     private val physPadding: SizeF,
     private val physCellSize: SizeF,
-    var drawRequest: (() -> Unit)? = null
+    private val drawRequest: () -> Unit
 ) {
+
     private val gameFieldBound = BoundF(PointF(physPadding.w, physPadding.h), physGameFieldSize)
     private var line: FieldLine? = null
 
@@ -51,30 +52,24 @@ class Field(
     }
 
     fun getLine(point: PointF, orientation: Orientation): FieldLine? {
-        line = null
         if (!isCompleted && gameFieldBound.has(point)) {
-            PointF(point.x - physPadding.w, point.y - physPadding.h).apply {
-                if (orientation == Orientation.HORIZONTAL) {
-                    val line = (this.y / physCellSize.h).toInt()
-                    this@Field.line = FieldLine(
-                        cells.filter { it.position.y == line },
-                        physCellSize,
-                        orientation,
-                        drawRequest,
-                        { doOnLineRelease() }
-                    )
-                } else {
-                    val row = (this.x / physCellSize.w).toInt()
-                    this@Field.line = FieldLine(
-                        cells.filter { it.position.x == row },
-                        physCellSize,
-                        orientation,
-                        drawRequest,
-                        { doOnLineRelease() }
-                    )
-                }
+            val isHorizontal = orientation == Orientation.HORIZONTAL
+            val pickingPoint = PointF(point.x - physPadding.w, point.y - physPadding.h)
+            val pickingLine = if (orientation == Orientation.HORIZONTAL) {
+                (pickingPoint.y / physCellSize.h).toInt()
+            } else {
+                (pickingPoint.x / physCellSize.w).toInt()
             }
 
+            line = FieldLine(
+                cells.filter {
+                    it.position.y == pickingLine && isHorizontal ||
+                            it.position.x == pickingLine && !isHorizontal
+                },
+                physCellSize,
+                orientation,
+                drawRequest
+            )
         }
         return line
     }
@@ -87,14 +82,14 @@ class Field(
         return true
     }
 
-    private fun doOnLineRelease() {
+    fun doOnLineReleased() {
         line = null
         isCompleted = isCompleted()
         if (isCompleted) listener?.onComplete()
     }
 
     companion object Factory {
-        fun create(data: FieldData): Field {
+        fun create(data: FieldData, drawRequest: () -> Unit): Field {
             val padding = SizeF(
                 data.physFieldSize.w * data.paddingPercent,
                 data.physFieldSize.h * data.paddingPercent
@@ -137,7 +132,7 @@ class Field(
                 }
             }
 
-            return Field(cells, physGameFieldSize, padding, physCellSize)
+            return Field(cells, physGameFieldSize, padding, physCellSize, drawRequest)
         }
     }
 

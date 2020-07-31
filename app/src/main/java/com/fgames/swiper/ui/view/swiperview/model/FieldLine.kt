@@ -12,15 +12,19 @@ import kotlin.math.roundToInt
 
 class FieldLine(
     val cells: List<Cell>,
-    private val physCellSize: SizeF,
+    physCellSize: SizeF,
     private val orientation: Orientation,
-    private val drawRequest: (() -> Unit)?,
-    private val doOnRelease: () -> Unit
+    private val drawRequest: () -> Unit
 ) {
-    private val mainValue = if (orientation == Orientation.HORIZONTAL) physCellSize.w else physCellSize.h
-    private var isBlocked = false
-    private var physOffset: Float = 0f
+
+    val mainValue = if (orientation == Orientation.HORIZONTAL) physCellSize.w else physCellSize.h
     private var phantomPaint: Paint = Paint()
+    var physOffset: Float = 0f
+        set(value) {
+            field = value
+            checkOffset()
+            drawRequest.invoke()
+        }
 
     fun onDraw(canvas: Canvas, physPadding: SizeF) {
         val deltaX = if(orientation == Orientation.HORIZONTAL) physOffset else 0f
@@ -46,6 +50,11 @@ class FieldLine(
         }
     }
 
+    fun setPhantomsAlpha(value: Float){
+        phantomPaint.alpha = (255 * value).roundToInt()
+        drawRequest.invoke()
+    }
+
     fun contain(cell: Cell): Boolean {
         for(c in cells) {
             if(c.position == cell.position) {
@@ -55,65 +64,12 @@ class FieldLine(
         return false
     }
 
-    fun release(withAnimation: Boolean = true, doOnRelease: (() -> Unit)? = null) {
-        if(isBlocked) return
-
-        block()
-
-        if(withAnimation) {
-            val from = physOffset
-            val to = if (physOffset > mainValue / 2) mainValue else 0f
-
-            val animator = ValueAnimator.ofFloat(from, to)
-
-            animator.duration = RELEASE_DURATION
-            animator.addUpdateListener {
-                physOffset = it.animatedValue as Float
-                checkOffset()
-                drawRequest?.invoke()
-            }
-            animator.doOnEnd {
-                animatePhantomsAlpha {
-                    this.doOnRelease()
-                    doOnRelease?.invoke()
-                }
-            }
-
-            animator.start()
-        } else {
-            physOffset = if (physOffset > mainValue / 2) mainValue else 0f
-            checkOffset()
-
-            drawRequest?.invoke()
-
-            this.doOnRelease()
-            doOnRelease?.invoke()
-        }
-    }
-
-    private fun animatePhantomsAlpha(doOnEnd: () -> Unit) {
-        val animator = ValueAnimator.ofFloat(1f, 0f)
-        animator.duration = RELEASE_DURATION / 2
-        animator.addUpdateListener {
-            phantomPaint.alpha = (255 * (it.animatedValue as Float)).roundToInt()
-            drawRequest?.invoke()
-        }
-        animator.doOnEnd { doOnEnd() }
-        animator.start()
-    }
-
-    private fun block() {
-        isBlocked = true
-    }
-
     fun move(deltaP: PointF) {
         val delta = if(orientation == Orientation.HORIZONTAL) deltaP.x else deltaP.y
 
-        if(!isBlocked) {
-            physOffset += delta
-            checkOffset()
-            drawRequest?.invoke()
-        }
+        physOffset += delta
+        checkOffset()
+        drawRequest.invoke()
     }
 
     private fun checkOffset() {

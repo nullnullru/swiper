@@ -13,6 +13,7 @@ class Cell(
     private val fieldSize: Size,
     var position: Point
 ) {
+
     val initPosition = Point(position.x, position.y)
 
     fun onDraw(canvas: Canvas, offset: SizeF, paint: Paint? = null, initPosition: Boolean = false) {

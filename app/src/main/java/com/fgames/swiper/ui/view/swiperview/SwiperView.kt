@@ -1,5 +1,6 @@
 package com.fgames.swiper.ui.view.swiperview
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -9,6 +10,7 @@ import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
+import androidx.core.animation.doOnEnd
 import com.fgames.swiper.R
 import com.fgames.swiper.model.Orientation
 import com.fgames.swiper.model.PointF
@@ -21,6 +23,7 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import kotlin.math.abs
 import kotlin.math.max
+import kotlin.math.roundToInt
 
 class SwiperView : View, Field.FieldListener {
     private var fieldCreatingDisposable: Disposable? = null
@@ -35,25 +38,24 @@ class SwiperView : View, Field.FieldListener {
     private var onDownPoint: PointF? = null
     private var lastMovePoint: PointF? = null
     private var longPress: Boolean = false
+    private var isBlocked = false
 
     private var gd: GestureDetector =
         GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
             override fun onLongPress(e: MotionEvent) {
                 longPress = true
-                fieldLine?.run {
-                    release(false)
-                }
+                release(false)
                 invalidate()
             }
 
             override fun onDown(event: MotionEvent?): Boolean {
                 if (event != null) {
-                    if (fieldLine != null) {
-                        fieldLine?.release { fieldLine = null }
-                    } else {
+                    if (fieldLine == null) {
+                        longPress = false
+                        lastMovePoint = null
                         onDownPoint = PointF(event.x, event.y)
-                        return true
                     }
+                    return true
                 }
                 return super.onDown(event)
             }
@@ -66,10 +68,13 @@ class SwiperView : View, Field.FieldListener {
         fieldCreatingDisposable?.dispose()
         fieldCreatingDisposable = Single.just(Field.FieldData(image, Size(width, height), size))
             .subscribeOn(Schedulers.io())
-            .flatMap { Single.just(Field.create(it)) }
-            .doOnSuccess { it.drawRequest = { invalidate() } }
-            .doOnSuccess { it.mix(mixIntensity) }
-            .doOnSuccess { it.listener = this }
+            .map {
+                val field = Field.create(it) { invalidate() }
+                return@map field.apply {
+                    mix(mixIntensity)
+                    listener = this@SwiperView
+                }
+            }
             .doOnSubscribe { longPress = false }
             .observeOn(AndroidSchedulers.mainThread())
             .doOnSuccess { listener?.onReady() }
@@ -105,20 +110,18 @@ class SwiperView : View, Field.FieldListener {
                             }
                         }
 
-                        fieldLine?.run {
-                            lastMovePoint?.let {
-                                move(point.concat(it.inverse()))
-                            }
+                        if(!isBlocked &&
+                            fieldLine != null &&
+                            lastMovePoint != null
+                        ) {
+                            fieldLine!!.move(point.concat(lastMovePoint!!.inverse()))
                         }
 
                         lastMovePoint = point
                     }
                 }
                 MotionEvent.ACTION_UP -> {
-                    fieldLine?.release {
-                        fieldLine = null
-                    }
-
+                    release { fieldLine = null }
                     longPress = false
                     invalidate()
                 }
@@ -137,6 +140,62 @@ class SwiperView : View, Field.FieldListener {
             }
             return@let null
         }
+    }
+
+    private fun release(withAnimation: Boolean = true, doOnRelease: (() -> Unit)? = null) {
+        if(isBlocked) return
+        block()
+
+        fieldLine?.run {
+            if(withAnimation) {
+                val from = physOffset
+                val to = if (physOffset > mainValue / 2) mainValue else 0f
+
+                val animator = ValueAnimator.ofFloat(from, to)
+
+                animator.duration = FieldLine.RELEASE_DURATION
+                animator.addUpdateListener {
+                    physOffset = it.animatedValue as Float
+                }
+                animator.doOnEnd {
+                    animatePhantomsAlpha {
+                        doOnRelease?.invoke()
+                        field?.doOnLineReleased()
+                        unblock()
+                    }
+                }
+
+                animator.start()
+            } else {
+                physOffset = if (physOffset > mainValue / 2) mainValue else 0f
+
+                doOnRelease?.invoke()
+                field?.doOnLineReleased()
+                unblock()
+            }
+        } ?: run {
+            unblock()
+        }
+    }
+
+    private fun block() {
+        isBlocked = true
+    }
+
+    private fun unblock() {
+        isBlocked = false
+    }
+
+    private fun animatePhantomsAlpha(doOnEnd: () -> Unit) {
+        val animator = ValueAnimator.ofFloat(1f, 0f)
+        animator.duration = FieldLine.RELEASE_DURATION / 2
+        animator.addUpdateListener {
+            fieldLine?.setPhantomsAlpha(it.animatedValue as Float)
+        }
+        animator.doOnEnd {
+            doOnEnd()
+        }
+        animator.start()
     }
 
     companion object {
