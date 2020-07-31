@@ -9,12 +9,12 @@
 
 
 <h2> Используемые библиотеки и технологии:  </h2>
-- RxJava2
-- MVVM
-- DataBinding
-- LiveData
-- Retrofit
-- Lottie
+- RxJava2  
+- MVVM  
+- DataBinding  
+- LiveData  
+- Retrofit  
+- Lottie  
 
 
 <h2> License </h2>
